@@ -2,6 +2,10 @@
 <head>
   <meta charset="utf-8" />
   <title>Aizawa</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+      <text x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='90'>🌀</text>
+    </svg>" />
   <style>
     body {
       background-color: #555555;
@@ -123,7 +127,10 @@
     }
 
     function makeImage(url, arr) {
-      const type = url.endsWith("png") ? "image/png" : "image/jpeg";
+      const type = url.endsWith("avif") ? "image/avif"
+        : url.endsWith("webp") ? "image/webp"
+        : url.endsWith("png") ? "image/png"
+        : "image/jpeg";
       const blob = new Blob([arr], { type });
       const img = document.createElement("img");
       img.src = URL.createObjectURL(blob);
