@@ -160,7 +160,7 @@
       const curr = ++cnt;
       const chapter = await fetchChapter(aesKey);
       if (curr !== cnt) {
-        break;
+        return;
       }
       const images = document.getElementById("images");
       while (images.lastChild) {
