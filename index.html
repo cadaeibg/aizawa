@@ -126,9 +126,8 @@
         : url.endsWith("webp") ? "image/webp"
         : url.endsWith("png") ? "image/png"
         : "image/jpeg";
-      const blob = new Blob([arr], { type });
       const img = document.createElement("img");
-      img.src = URL.createObjectURL(blob);
+      img.src = URL.createObjectURL(new Blob([arr], { type }));
       img.onload = () => { URL.revokeObjectURL(img.src); };
       return img;
     }
@@ -198,18 +197,11 @@
 
     (async () => {
       const aesKey = await getAesKey();
-      // const exported = await window.crypto.subtle.exportKey(
-      //   "raw",
-      //   aesKey
-      // );
-      // console.log([...new Uint8Array(exported)]
-      //   .map(x => x.toString(16).padStart(2, '0'))
-      //   .join(''));
+      await doFetch(aesKey, { index: null });
       for (const title of document.querySelectorAll(".title")) {
         title.addEventListener("click", () => runOnce(aesKey));
       }
       await runOnce(aesKey);
-      doFetch(aesKey, { index: null });
     })()
   </script>
 </body>
