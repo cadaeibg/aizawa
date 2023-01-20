@@ -145,8 +145,11 @@
       return await decrypt(aesKey, json);
     }
 
-    async function fetchChapter(aesKey) {
-      const data = await doFetch(aesKey, { chapter: null });
+    async function fetchChapter(aesKey, id) {
+      const data = await doFetch(
+        aesKey,
+        { chapter: id ? id.substring(1) : null}
+      );
       return JSON.parse(new TextDecoder().decode(data));
     }
 
@@ -155,12 +158,14 @@
       return makeImage(url, data);
     }
 
-    async function runOnce(aesKey) {
+    async function runOnce(aesKey, id) {
       const curr = ++cnt;
-      const chapter = await fetchChapter(aesKey);
+      const chapter = await fetchChapter(aesKey, id);
       if (curr !== cnt) {
         return;
       }
+      window.location.hash = chapter.id;
+      document.title = chapter.title;
       const images = document.getElementById("images");
       while (images.lastChild) {
         images.removeChild(images.lastChild);
@@ -199,9 +204,9 @@
       const aesKey = await getAesKey();
       await doFetch(aesKey, { index: null });
       for (const title of document.querySelectorAll(".title")) {
-        title.addEventListener("click", () => runOnce(aesKey));
+        title.addEventListener("click", () => runOnce(aesKey, null));
       }
-      await runOnce(aesKey);
+      await runOnce(aesKey, window.location.hash);
     })()
   </script>
 </body>
