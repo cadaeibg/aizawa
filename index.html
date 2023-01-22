@@ -146,7 +146,7 @@
     }
 
     function setState(state) {
-      const hash = '';
+      let hash = '';
       for (const [k, v] of Object.entries(state)) {
         hash += k + "=" + v + "&";
       }
