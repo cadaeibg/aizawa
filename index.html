@@ -24,9 +24,9 @@
   </style>
 </head>
 <body>
-  <button class="title" type="button">Loading...</button>
+  <button id="top" class="title" type="button">Loading...</button>
   <div id="images"></div>
-  <button class="title" type="button">Loading...</button>
+  <button id="bot" class="title" type="button" disabled>Loading...</button>
   <script type = "module">
     const salt = new Uint8Array([
       0xee, 0x24, 0x61, 0x51, 0x23, 0xae, 0x85, 0x4e, 0xba, 0xf5, 0x5a, 0x21, 0x68, 0xf4, 0x85, 0x7a,
@@ -50,7 +50,18 @@
       0x00, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
       0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x00, 0x00, 0x00, 0x00, 0x00
     ]);
-    
+
+    const observer = new IntersectionObserver(entries => {
+      for (const elem of entries) {
+        if (elem.isInteracting) {
+          const state = getState();
+          state.index = elem.dataset.index;
+          setState(state);
+          break;
+        }
+      }
+    });
+
     var cnt = 0;
 
     function encode(arr) {
@@ -121,6 +132,27 @@
       );
     }
 
+    function getState() {
+      const state = {};
+      for (const param of window.location.hash.substring(1).split("&")) {
+        for (const key of ["id=", "index="]) {
+          if (param.startsWith(key)) {
+            state[key] = params.substring(key.length);
+            break;
+          }
+        }
+      }
+      return state;
+    }
+
+    function setState(state) {
+      const hash = '';
+      for (const [k, v] of Object.entries(state)) {
+        hash += k + "=" + v + "&";
+      }
+      window.location.hash = hash.substring(0, hash.length - 1);
+    }
+
     function makeImage(url, arr) {
       const type = url.endsWith("avif") ? "image/avif"
         : url.endsWith("webp") ? "image/webp"
@@ -148,7 +180,7 @@
     async function fetchChapter(aesKey, id) {
       const data = await doFetch(
         aesKey,
-        { chapter: id ? parseInt(id.substring(1)) : null}
+        { chapter: id ? parseInt(id) : null}
       );
       return JSON.parse(new TextDecoder().decode(data));
     }
@@ -158,13 +190,17 @@
       return makeImage(url, data);
     }
 
-    async function runOnce(aesKey, id) {
+    async function runOnce(aesKey) {
+      document.getElementById("bot").disabled = true;
+      const state = getState();
       const curr = ++cnt;
-      const chapter = await fetchChapter(aesKey, id);
+      const chapter = await fetchChapter(aesKey, state.id);
       if (curr !== cnt) {
         return;
       }
-      window.location.hash = chapter.id;
+      observer.disconnect();
+      state.id = chapter.id;
+      setState(state);
       document.title = chapter.title;
       const images = document.getElementById("images");
       while (images.lastChild) {
@@ -173,13 +209,19 @@
       for (const title of document.querySelectorAll(".title")) {
         title.textContent = chapter.title;
       }
-      for (const url of chapter.urls) {
+      for (const [index, url] of chapter.urls.entries()) {
+        if (state.index > index) {
+          continue;
+        }
         const image = await fetchImage(aesKey, url);
         if (curr !== cnt) {
           break;
         }
+        image.dataset.index = index;
+        observer.observe(image);
         images.appendChild(image);
       }
+      document.getElementById("bot").disabled = false;
     }
 
     async function getAesKey() {
@@ -204,9 +246,12 @@
       const aesKey = await getAesKey();
       await doFetch(aesKey, { index: null });
       for (const title of document.querySelectorAll(".title")) {
-        title.addEventListener("click", () => runOnce(aesKey, null));
+        title.addEventListener("click", () => {
+          window.location.hash = '';
+          runOnce(aesKey);
+        });
       }
-      await runOnce(aesKey, window.location.hash);
+      await runOnce(aesKey);
     })()
   </script>
 </body>
