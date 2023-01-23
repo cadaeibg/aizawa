@@ -190,15 +190,13 @@
       return makeImage(url, data);
     }
 
-    async function runOnce(aesKey) {
+    async function runOnce(aesKey, state) {
       document.getElementById("bot").disabled = true;
-      const state = getState();
       const curr = ++cnt;
       const chapter = await fetchChapter(aesKey, state.id);
       if (curr !== cnt) {
         return;
       }
-      observer.disconnect();
       state.id = chapter.id;
       setState(state);
       document.title = chapter.title;
@@ -215,7 +213,7 @@
         }
         const image = await fetchImage(aesKey, url);
         if (curr !== cnt) {
-          break;
+          return;
         }
         image.dataset.index = index;
         observer.observe(image);
@@ -247,11 +245,12 @@
       await doFetch(aesKey, { index: null });
       for (const title of document.querySelectorAll(".title")) {
         title.addEventListener("click", () => {
+          observer.disconnect();
           window.location.hash = '';
-          runOnce(aesKey);
+          runOnce(aesKey, {});
         });
       }
-      await runOnce(aesKey);
+      await runOnce(aesKeyi, getState());
     })()
   </script>
 </body>
