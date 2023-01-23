@@ -210,7 +210,7 @@
         title.textContent = chapter.title;
       }
       for (const [index, url] of chapter.urls.entries()) {
-        if (state.index > index) {
+        if (state.index > index + 1) {
           continue;
         }
         const image = await fetchImage(aesKey, url);
