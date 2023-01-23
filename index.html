@@ -52,10 +52,10 @@
     ]);
 
     const observer = new IntersectionObserver(entries => {
-      for (const elem of entries) {
-        if (elem.isInteracting) {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
           const state = getState();
-          state.index = elem.dataset.index;
+          state.index = entry.target.dataset.index;
           setState(state);
           break;
         }
