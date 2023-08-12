@@ -164,23 +164,60 @@
       return img;
     }
 
+    async function fetchWithTimeout(resource, millis, options) {
+      const controller = new AbortController();
+      let id = setTimeout(() => controller.abort(), timeout);
+      let response = await fetch(
+        resource,
+        ...options,
+        signal: controller.signal
+      );
+      clearTimeout(id);
+      let length = 0;
+      const chunks = [];
+      id = setTimeout(() => controller.abort(), timeout);
+      for await (const chunk of response.body) {
+        clearTimeout(id);
+        length += chunk.length;
+        chunks.push(chunk);
+        id = setTimeout(() => controller.abort(), timeout);
+      }
+      clearTimeout(id);
+      const body = new UintArray(length);
+      let position = 0;
+      for (let chunk of chunks) {
+        body.set(chunk, position);
+        position += chunk.length;
+      }
+      return JSON.parse(new TextDecoder().decode(body));
+    }
+
+    async function fetchWithRetry(resource, options) {
+      while (true) {
+        try {
+          return await fetchWithTimeout(resource, 5000, options);
+        } catch (error) {
+          console.log("timed out");
+        }
+      }
+    }
+
     async function doFetch(aesKey, request) {
       const encrypted = await encrypt(aesKey, request);
-      const response = await fetch("https://f3bwth2texzflzphfhgxkj7xvy0nhcyd.lambda-url.us-west-2.on.aws/", {
+      const response = await fetchWithRetry("https://f3bwth2texzflzphfhgxkj7xvy0nhcyd.lambda-url.us-west-2.on.aws/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify(encrypted)
       });
-      const json = await response.json();
-      return await decrypt(aesKey, json);
+      return await decrypt(aesKey, response);
     }
 
     async function fetchChapter(aesKey, id) {
       const data = await doFetch(
         aesKey,
-        { chapter: id ? parseInt(id) : null}
+        { chapter: id ? parseInt(id) : null }
       );
       return JSON.parse(new TextDecoder().decode(data));
     }
