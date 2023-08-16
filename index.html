@@ -167,11 +167,10 @@
     async function fetchWithTimeout(resource, millis, options) {
       const controller = new AbortController();
       let id = setTimeout(() => controller.abort(), timeout);
-      let response = await fetch(
-        resource,
+      let response = await fetch(resource, {
         ...options,
         signal: controller.signal
-      );
+      });
       clearTimeout(id);
       let length = 0;
       const chunks = [];
