@@ -185,7 +185,7 @@
         length += value.length;
         chunks.push(value);
       }
-      const body = new UintArray(length);
+      const body = new Uint8Array(length);
       let position = 0;
       for (let chunk of chunks) {
         body.set(chunk, position);
