@@ -177,13 +177,13 @@
       const reader = response.body.getReader();
       while (true) {
         id = setTimeout(() => controller.abort(), timeout);
-        const {done, chunk} = await reader.read();
+        const {done, value} = await reader.read();
         clearTimeout(id);
         if (done) {
           break;
         }
-        length += chunk.length;
-        chunks.push(chunk);
+        length += value.length;
+        chunks.push(value);
       }
       const body = new UintArray(length);
       let position = 0;
