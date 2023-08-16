@@ -192,11 +192,14 @@
     }
 
     async function fetchWithRetry(resource, options) {
-      while (true) {
+      for (let i = 0; ; i++) {
         try {
           return await fetchWithTimeout(resource, 5000, options);
         } catch (error) {
-          console.log("timed out");
+          console.log(error);
+          if (i >= 50) {
+            throw error;
+          }
         }
       }
     }
