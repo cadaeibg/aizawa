@@ -164,7 +164,7 @@
       return img;
     }
 
-    async function fetchWithTimeout(resource, millis, options) {
+    async function fetchWithTimeout(resource, timeout, options) {
       const controller = new AbortController();
       let id = setTimeout(() => controller.abort(), timeout);
       let response = await fetch(resource, {
