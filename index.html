@@ -203,6 +203,7 @@
           if (i >= 50) {
             throw error;
           }
+          await new Promise(r => setTimeout(r, 2000));
         }
       }
     }
