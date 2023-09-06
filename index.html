@@ -4,8 +4,13 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Aizawa</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,
-    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
-      <text x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='90'>🌀</text>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"
+        enable-background="new 0 0 64 64" xml:space="preserve" fill="#000000">
+      <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+      <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+      <g id="SVGRepo_iconCarrier">
+        <path fill="#231F20" d="M47.977,5.99c-4.416,0-8.414,1.792-11.308,4.686l-4.685,4.654l-4.686-4.654 C24.406,7.782,20.408,5.99,15.992,5.99C7.161,5.99,0,13.15,0,21.982c0,4.416,2.85,8.539,5.747,11.432l23.41,23.414 c1.562,1.562,4.092,1.562,5.653,0l23.349-23.352c2.896-2.893,5.81-7.078,5.81-11.494C63.969,13.15,56.808,5.99,47.977,5.99z"></path>
+      </g>
     </svg>" />
   <style>
     body {
@@ -13,20 +18,28 @@
       display: flex;
       flex-direction: column;
     }
-    .title {
-      font-size: 5em;
-      margin: 10px 0px;
-    }
     #images {
       display: flex;
       flex-direction: column;
     }
+    #header, #footer {
+      display: flex;
+      flex-direction: row;
+      margin: 10px 0px;
+    }
   </style>
 </head>
 <body>
-  <button id="top" class="title" type="button">Loading...</button>
+  <div id="header">
+    <input id="password" class="top" type="password" />
+    <button class="top reload" type="button">Reload</button>
+    <button class="top next" type="button">Next</button>
+  </div>
   <div id="images"></div>
-  <button id="bot" class="title" type="button" disabled>Loading...</button>
+  <div id="footer">
+    <button class="bottom reload" type="button" disabled>Reload</button>
+    <button class="bottom next" type="button" disabled>Next</button>
+  </div>
   <script type = "module">
     const salt = new Uint8Array([
       0xee, 0x24, 0x61, 0x51, 0x23, 0xae, 0x85, 0x4e, 0xba, 0xf5, 0x5a, 0x21, 0x68, 0xf4, 0x85, 0x7a,
@@ -63,6 +76,7 @@
     });
 
     var cnt = 0;
+    var init = false;
 
     function encode(arr) {
       let str = "", i;
@@ -234,7 +248,16 @@
     }
 
     async function runOnce(aesKey, state) {
-      document.getElementById("bot").disabled = true;
+      observer.disconnect();
+      window.location.hash = '';
+      const aesKey = await getAesKey();
+      if (!init) {
+        await doFetch(aesKey, { index: null });
+        init = true;
+      }
+      for (const elem of document.querySelectorAll(".bottom")) {
+        elem.disabled = true;
+      }
       const curr = ++cnt;
       const chapter = await fetchChapter(aesKey, state.id);
       if (curr !== cnt) {
@@ -246,9 +269,6 @@
       const images = document.getElementById("images");
       while (images.lastChild) {
         images.removeChild(images.lastChild);
-      }
-      for (const title of document.querySelectorAll(".title")) {
-        title.textContent = chapter.title;
       }
       for (const [index, url] of chapter.urls.entries()) {
         if (state.index > index + 1) {
@@ -262,11 +282,13 @@
         observer.observe(image);
         images.appendChild(image);
       }
-      document.getElementById("bot").disabled = false;
+      for (const elem of document.querySelectorAll(".bottom")) {
+        elem.disabled = false;
+      }
     }
 
     async function getAesKey() {
-      const password = window.prompt("Enter password");
+      const password = document.getElementById("password").value;
       const pbkdf2Key = await window.crypto.subtle.importKey(
         "raw",
         new TextEncoder().encode(password),
@@ -283,18 +305,13 @@
       );
     }
 
-    (async () => {
-      const aesKey = await getAesKey();
-      await doFetch(aesKey, { index: null });
-      for (const title of document.querySelectorAll(".title")) {
-        title.addEventListener("click", () => {
-          observer.disconnect();
-          window.location.hash = '';
-          runOnce(aesKey, {});
-        });
-      }
-      await runOnce(aesKey, getState());
-    })()
+    
+    for (const elem of document.querySelectorAll(".reload")) {
+      elem.addEventListener("click", () => runOnce(aesKey, getState()));
+    }
+    for (const elem of document.querySelectorAll(".next")) {
+      elem.addEventListener("click", () => runOnce(aesKey, {}));
+    }
   </script>
 </body>
 </html>
