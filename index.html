@@ -3,16 +3,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <title>Aizawa</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,
-    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'
-        enable-background='new 0 0 64 64' xml:space='preserve' fill='#000000'>
-      <g id='SVGRepo_bgCarrier' stroke-width='0'></g>
-      <g id='SVGRepo_tracerCarrier' stroke-linecap='round' stroke-linejoin='round></g>
-      <g id='SVGRepo_iconCarrier'>
-        <path fill='#231F20'
-        d='M47.977,5.99c-4.416,0-8.414,1.792-11.308,4.686l-4.685,4.654l-4.686-4.654 C24.406,7.782,20.408,5.99,15.992,5.99C7.161,5.99,0,13.15,0,21.982c0,4.416,2.85,8.539,5.747,11.432l23.41,23.414 c1.562,1.562,4.092,1.562,5.653,0l23.349-23.352c2.896-2.893,5.81-7.078,5.81-11.494C63.969,13.15,56.808,5.99,47.977,5.99z'></path>
-      </g>
-    </svg>" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg xmlns='http://www.w3.org/2000/svg' id='Layer_1' data-name='Layer 1' viewBox='0 0 24 24' width='512' height='512'%3E%3Cpath d='M22.2,2.163a4.992,4.992,0,0,0-4.1-1.081l-3.822.694A4,4,0,0,0,12,3.065,4,4,0,0,0,9.716,1.776L5.9,1.082A5,5,0,0,0,0,6V16.793a5,5,0,0,0,4.105,4.919l6.286,1.143a9,9,0,0,0,3.218,0L19.9,21.712A5,5,0,0,0,24,16.793V6A4.983,4.983,0,0,0,22.2,2.163ZM11,20.928c-.084-.012-.168-.026-.252-.041L4.463,19.745A3,3,0,0,1,2,16.793V6A3,3,0,0,1,5,3a3.081,3.081,0,0,1,.54.049l3.82.7A2,2,0,0,1,11,5.712Zm11-4.135a3,3,0,0,1-2.463,2.952l-6.285,1.142c-.084.015-.168.029-.252.041V5.712a2,2,0,0,1,1.642-1.968l3.821-.7A3,3,0,0,1,22,6Z'/%3E%3C/svg%3E" />
   <style>
     body {
       background-color: #555555;
@@ -27,6 +18,13 @@
       display: flex;
       flex-direction: row;
       margin: 10px 0px;
+    }
+    #header > *, #footer > * {
+      font-size: 3em;
+    }
+    .reload {
+      margin: 0px 10px 0px 0px;
+      margin-left: auto;
     }
   </style>
 </head>
@@ -250,14 +248,13 @@
 
     async function runOnce(state) {
       observer.disconnect();
-      window.location.hash = '';
-      const aesKey = await getAesKey();
-      if (!init) {
-        await doFetch(aesKey, { index: null });
-        init = true;
-      }
       for (const elem of document.querySelectorAll(".bottom")) {
         elem.disabled = true;
+      }
+      const aesKey = await getAesKey();
+      if (!init) {
+        doFetch(aesKey, { index: null });
+        init = true;
       }
       const curr = ++cnt;
       const chapter = await fetchChapter(aesKey, state.id);
