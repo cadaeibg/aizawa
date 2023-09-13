@@ -201,7 +201,7 @@
           return await fetchWithTimeout(resource, 5000, options);
         } catch (error) {
           console.log(error);
-          if (i >= 50) {
+          if (i >= 50 || error.name === "SyntaxError") {
             throw error;
           }
           await new Promise(r => setTimeout(r, 2000));
@@ -243,7 +243,7 @@
       try {
         chapter = await fetchChapter(aesKey, state.id);
       } catch {
-        sessionStorage.removeItem("aesKey");
+        sessionStorage.removeItem("password");
         for (const title of document.querySelectorAll(".title")) {
           title.textContent = "Error";
         }
@@ -264,7 +264,7 @@
         images.removeChild(images.lastChild);
       }
       for (const title of document.querySelectorAll(".title")) {
-        title.textContents = chapter.title;
+        title.textContent = chapter.title;
       }
       for (const [index, url] of chapter.urls.entries()) {
         if (state.index > index + 1) {
@@ -282,11 +282,11 @@
     }
 
     async function getAesKey() {
-      let aesKey = sessionStorage.getItem("aesKey");
-      if (aesKey) {
-        return aesKey;
+      let password = sessionStorage.getItem("password");
+      if (!password) {
+        password = window.prompt("Password");
+        sessionStorage.setItem("password", password);
       }
-      const password = window.prompt("Password");
       const pbkdf2Key = await window.crypto.subtle.importKey(
         "raw",
         new TextEncoder().encode(password),
@@ -294,15 +294,13 @@
         false,
         ["deriveBits", "deriveKey"],
       );
-      aesKey = await window.crypto.subtle.deriveKey(
+      return await window.crypto.subtle.deriveKey(
         { name: "PBKDF2", salt, iterations: 1000000, hash: "SHA-256" },
         pbkdf2Key,
         { name: "AES-GCM", length: 256 },
         false,
         ["encrypt", "decrypt"],
       );
-      sessionStorage.setItem("aesKey", aesKey);
-      return aesKey;
     }
 
     for (const elem of document.querySelectorAll(".title")) {
@@ -310,7 +308,7 @@
     }
 
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible" && !sessionStorage.getItem("aesKey")) {
+      if (document.visibilityState === "visible" && !sessionStorage.getItem("password")) {
         runOnce(getState());
       }
     });
