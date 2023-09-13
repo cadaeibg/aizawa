@@ -28,7 +28,7 @@
 <body>
   <button id="top" class="title" type="button">Loading...</button>
   <div id="images"></div>
-  <button id="bottom" class="title" type="button" />
+  <button id="bottom" class="title" type="button"></button>
   <script type = "module">
     const salt = new Uint8Array([
       0xee, 0x24, 0x61, 0x51, 0x23, 0xae, 0x85, 0x4e, 0xba, 0xf5, 0x5a, 0x21, 0x68, 0xf4, 0x85, 0x7a,
@@ -236,19 +236,28 @@
       return makeImage(url, data);
     }
 
+    function setTitle(title) {
+      for (const elem of document.querySelectorAll(".title")) {
+        elem.textContent = title;
+      }
+    }
+
     async function runOnce(state) {
       observer.disconnect();
       document.getElementById("bottom").style.display = "none";
       const curr = ++cnt;
       const aesKey = await getAesKey();
+      setTitle("Loading...");
+      const images = document.getElementById("images");
+      while (images.lastChild) {
+        images.removeChild(images.lastChild);
+      }
       let chapter;
       try {
         chapter = await fetchChapter(aesKey, state.id);
       } catch {
         sessionStorage.removeItem("password");
-        for (const title of document.querySelectorAll(".title")) {
-          title.textContent = "Error";
-        }
+        setTitle("Error");
         return;
       }
       if (curr !== cnt) {
@@ -258,16 +267,10 @@
         doFetch(aesKey, { index: null });
         init = true;
       }
+      document.title = chapter.title;
+      setTitle(chapter.title);
       state.id = chapter.id;
       setState(state);
-      document.title = chapter.title;
-      const images = document.getElementById("images");
-      while (images.lastChild) {
-        images.removeChild(images.lastChild);
-      }
-      for (const title of document.querySelectorAll(".title")) {
-        title.textContent = chapter.title;
-      }
       for (const [index, url] of chapter.urls.entries()) {
         if (state.index > index + 1) {
           continue;
