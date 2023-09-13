@@ -10,35 +10,23 @@
       display: flex;
       flex-direction: column;
     }
+    .title {
+      font-size: 5em;
+      margin:10px; 0px;
+    }
     #images {
       display: flex;
       flex-direction: column;
     }
-    #header, #footer {
-      display: flex;
-      flex-direction: row;
-      margin: 10px 0px;
-    }
-    #header > *, #footer > * {
-      font-size: 3em;
-    }
-    .reload {
-      margin: 0px 10px 0px 0px;
-      margin-left: auto;
+    #bot {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <div id="header">
-    <input id="password" class="top" type="password" />
-    <button class="top reload" type="button">Reload</button>
-    <button class="top next" type="button">Next</button>
-  </div>
+  <button id="top" class="title" type="button">Loading...</button>
   <div id="images"></div>
-  <div id="footer">
-    <button class="bottom reload" type="button" disabled>Reload</button>
-    <button class="bottom next" type="button" disabled>Next</button>
-  </div>
+  <button id="bot" class="title" type="button" />
   <script type = "module">
     const salt = new Uint8Array([
       0xee, 0x24, 0x61, 0x51, 0x23, 0xae, 0x85, 0x4e, 0xba, 0xf5, 0x5a, 0x21, 0x68, 0xf4, 0x85, 0x7a,
@@ -248,18 +236,25 @@
 
     async function runOnce(state) {
       observer.disconnect();
-      for (const elem of document.querySelectorAll(".bottom")) {
-        elem.disabled = true;
-      }
+      document.getElementById("bot").style.display = "none";
+      const curr = ++cnt;
       const aesKey = await getAesKey();
+      let chapter;
+      try {
+        chapter = await fetchChapter(aesKey, state.id);
+      } catch {
+        sessionStorage.removeItem("aesKey");
+        for (const title of document.querySelectorAll(".title")) {
+          title.textContent = "Error";
+        }
+        return;
+      }
+      if (curr !== cnt) {
+        return;
+      }
       if (!init) {
         doFetch(aesKey, { index: null });
         init = true;
-      }
-      const curr = ++cnt;
-      const chapter = await fetchChapter(aesKey, state.id);
-      if (curr !== cnt) {
-        return;
       }
       state.id = chapter.id;
       setState(state);
@@ -267,6 +262,9 @@
       const images = document.getElementById("images");
       while (images.lastChild) {
         images.removeChild(images.lastChild);
+      }
+      for (const title of document.querySelectorAll(".title")) {
+        title.textContents = chapter.title;
       }
       for (const [index, url] of chapter.urls.entries()) {
         if (state.index > index + 1) {
@@ -280,13 +278,15 @@
         observer.observe(image);
         images.appendChild(image);
       }
-      for (const elem of document.querySelectorAll(".bottom")) {
-        elem.disabled = false;
-      }
+      document.getElementById("bot").style.display = "block";
     }
 
     async function getAesKey() {
-      const password = document.getElementById("password").value;
+      let aesKey = sessionStorage.getItem("aesKey");
+      if (aesKey) {
+        return aesKey;
+      }
+      const password = window.prompt("Password");
       const pbkdf2Key = await window.crypto.subtle.importKey(
         "raw",
         new TextEncoder().encode(password),
@@ -294,22 +294,28 @@
         false,
         ["deriveBits", "deriveKey"],
       );
-      return await window.crypto.subtle.deriveKey(
+      aesKey = await window.crypto.subtle.deriveKey(
         { name: "PBKDF2", salt, iterations: 1000000, hash: "SHA-256" },
         pbkdf2Key,
         { name: "AES-GCM", length: 256 },
         false,
         ["encrypt", "decrypt"],
       );
+      sessionStorage.setItem("aesKey", aesKey);
+      return aesKey;
     }
 
-    
-    for (const elem of document.querySelectorAll(".reload")) {
-      elem.addEventListener("click", () => runOnce(getState()));
-    }
-    for (const elem of document.querySelectorAll(".next")) {
+    for (const elem of document.querySelectorAll(".title")) {
       elem.addEventListener("click", () => runOnce({}));
     }
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && !sessionStorage.getItem("aesKey")) {
+        runOnce(getState());
+      }
+    });
+
+    runOnce(getState());
   </script>
 </body>
 </html>
