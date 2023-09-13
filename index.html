@@ -10,23 +10,25 @@
       display: flex;
       flex-direction: column;
     }
-    .title {
+    #top {
       font-size: 5em;
-      margin:10px; 0px;
+      margin-bottom: 10px;
     }
     #images {
       display: flex;
       flex-direction: column;
     }
-    #bot {
+    #bottom {
       display: none;
+      font-size: 5em;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
   <button id="top" class="title" type="button">Loading...</button>
   <div id="images"></div>
-  <button id="bot" class="title" type="button" />
+  <button id="bottom" class="title" type="button" />
   <script type = "module">
     const salt = new Uint8Array([
       0xee, 0x24, 0x61, 0x51, 0x23, 0xae, 0x85, 0x4e, 0xba, 0xf5, 0x5a, 0x21, 0x68, 0xf4, 0x85, 0x7a,
@@ -236,7 +238,7 @@
 
     async function runOnce(state) {
       observer.disconnect();
-      document.getElementById("bot").style.display = "none";
+      document.getElementById("bottom").style.display = "none";
       const curr = ++cnt;
       const aesKey = await getAesKey();
       let chapter;
@@ -278,7 +280,7 @@
         observer.observe(image);
         images.appendChild(image);
       }
-      document.getElementById("bot").style.display = "block";
+      document.getElementById("bottom").style.display = "inline-block";
     }
 
     async function getAesKey() {
