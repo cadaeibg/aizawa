@@ -271,6 +271,7 @@
       setTitle(chapter.title);
       state.id = chapter.id;
       setState(state);
+      let scroll = true;
       for (const [index, url] of chapter.urls.entries()) {
         if (state.index > index + 1) {
           continue;
@@ -282,6 +283,10 @@
         image.dataset.index = index;
         observer.observe(image);
         images.appendChild(image);
+        if (scroll) {
+          window.scrollTo(0, 0);
+          scroll = false;
+        }
       }
       document.getElementById("bottom").style.display = "inline-block";
     }
